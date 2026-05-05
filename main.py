@@ -16,10 +16,23 @@ def write_json(data):
         json.dump(data, file, indent=4)
 
 
+def get_float(prompt):
+    while True:
+        try:
+            number = float(input(prompt))
+            if number <= 0:
+                print("Please enter a number greater than 0.")
+            else:
+                return number
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+
+
 def add_stock():
     symbol = input("Enter stock symbol: ").upper()
-    shares = float(input("Enter number of shares: "))
-    buy_price = float(input("Enter buy price per share: "))
+
+    shares = get_float("Enter number of shares: ")
+    buy_price = get_float("Enter buy price per share: ")
 
     stock = {
         "symbol": symbol,
@@ -41,9 +54,23 @@ def view_portfolio():
         print("No stocks added yet.")
     else:
         print("\nYour Portfolio:")
+        total_invested = 0
+
         for stock in data:
-            total = stock["shares"] * stock["buy_price"]
-            print(stock["symbol"], "-", stock["shares"], "shares at $", stock["buy_price"], "Total invested: $", round(total, 2))
+            stock_total = stock["shares"] * stock["buy_price"]
+            total_invested += stock_total
+
+            print(
+                stock["symbol"],
+                "-",
+                stock["shares"],
+                "shares at $",
+                stock["buy_price"],
+                "| Total invested: $",
+                round(stock_total, 2)
+            )
+
+        print("\nTotal portfolio investment: $", round(total_invested, 2))
 
 
 def main():
