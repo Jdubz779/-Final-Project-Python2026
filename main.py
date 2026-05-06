@@ -56,11 +56,12 @@ def view_portfolio():
         print("\nYour Portfolio:")
         total_invested = 0
 
-        for stock in data:
+        for i, stock in enumerate(data):
             stock_total = stock["shares"] * stock["buy_price"]
             total_invested += stock_total
 
             print(
+                str(i + 1) + ".",
                 stock["symbol"],
                 "-",
                 stock["shares"],
@@ -73,12 +74,35 @@ def view_portfolio():
         print("\nTotal portfolio investment: $", round(total_invested, 2))
 
 
+def delete_stock():
+    data = read_json()
+
+    if len(data) == 0:
+        print("No stocks to delete.")
+        return
+
+    view_portfolio()
+
+    try:
+        choice = int(input("Enter the number of the stock to delete: "))
+
+        if choice < 1 or choice > len(data):
+            print("Invalid stock number.")
+        else:
+            removed_stock = data.pop(choice - 1)
+            write_json(data)
+            print(removed_stock["symbol"], "was deleted from your portfolio.")
+    except ValueError:
+        print("Invalid input. Please enter a number.")
+
+
 def main():
     while True:
         print("\nStock Portfolio Tracker")
         print("1. Add stock")
         print("2. View portfolio")
-        print("3. Exit")
+        print("3. Delete stock")
+        print("4. Exit")
 
         choice = input("Choose an option: ")
 
@@ -87,6 +111,8 @@ def main():
         elif choice == "2":
             view_portfolio()
         elif choice == "3":
+            delete_stock()
+        elif choice == "4":
             print("Goodbye!")
             break
         else:
