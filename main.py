@@ -1,4 +1,5 @@
 import json
+import yfinance as yf
 
 FILE_NAME = "portfolio.json"
 
@@ -28,11 +29,31 @@ def get_float(prompt):
             print("Invalid input. Please enter a number.")
 
 
+def get_current_price(symbol):
+    try:
+        stock = yf.Ticker(symbol)
+        data = stock.history(period="1d")
+
+        if data.empty:
+            return None
+
+        return round(data["Close"].iloc[-1], 2)
+
+    except:
+        return None
+
+
 def add_stock():
     symbol = input("Enter stock symbol: ").upper()
 
     shares = get_float("Enter number of shares: ")
     buy_price = get_float("Enter buy price per share: ")
+
+    current_price = get_current_price(symbol)
+
+    if current_price is None:
+        print("Invalid stock symbol or price could not be found.")
+        return
 
     stock = {
         "symbol": symbol,
@@ -45,6 +66,7 @@ def add_stock():
     write_json(data)
 
     print("Stock added successfully!")
+    print("Current price for", symbol, "is $", current_price)
 
 
 def view_portfolio():
@@ -55,23 +77,34 @@ def view_portfolio():
     else:
         print("\nYour Portfolio:")
         total_invested = 0
+        total_current_value = 0
 
         for i, stock in enumerate(data):
-            stock_total = stock["shares"] * stock["buy_price"]
-            total_invested += stock_total
+            current_price = get_current_price(stock["symbol"])
 
-            print(
-                str(i + 1) + ".",
-                stock["symbol"],
-                "-",
-                stock["shares"],
-                "shares at $",
-                stock["buy_price"],
-                "| Total invested: $",
-                round(stock_total, 2)
-            )
+            if current_price is None:
+                current_price = stock["buy_price"]
 
-        print("\nTotal portfolio investment: $", round(total_invested, 2))
+            invested = stock["shares"] * stock["buy_price"]
+            current_value = stock["shares"] * current_price
+            profit_loss = current_value - invested
+
+            total_invested += invested
+            total_current_value += current_value
+
+            print("\n" + str(i + 1) + ". " + stock["symbol"])
+            print("Shares:", stock["shares"])
+            print("Buy Price: $", stock["buy_price"])
+            print("Current Price: $", current_price)
+            print("Invested: $", round(invested, 2))
+            print("Current Value: $", round(current_value, 2))
+            print("Profit/Loss: $", round(profit_loss, 2))
+
+        overall_profit = total_current_value - total_invested
+
+        print("\nTotal Invested: $", round(total_invested, 2))
+        print("Total Current Value: $", round(total_current_value, 2))
+        print("Overall Profit/Loss: $", round(overall_profit, 2))
 
 
 def delete_stock():
@@ -92,6 +125,7 @@ def delete_stock():
             removed_stock = data.pop(choice - 1)
             write_json(data)
             print(removed_stock["symbol"], "was deleted from your portfolio.")
+
     except ValueError:
         print("Invalid input. Please enter a number.")
 
