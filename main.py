@@ -32,28 +32,35 @@ def get_float(prompt):
 def get_current_price(symbol):
     try:
         stock = yf.Ticker(symbol)
-        data = stock.history(period="1d")
+        data = stock.history(period="1d", raise_errors=False)
 
         if data.empty:
             return None
 
         return round(data["Close"].iloc[-1], 2)
 
-    except:
+    except Exception:
         return None
+
+
+def is_valid_stock(symbol):
+    price = get_current_price(symbol)
+
+    if price is None:
+        return False
+    else:
+        return True
 
 
 def add_stock():
     symbol = input("Enter stock symbol: ").upper()
 
+    if is_valid_stock(symbol) == False:
+        print("That stock symbol does not exist.")
+        return
+
     shares = get_float("Enter number of shares: ")
     buy_price = get_float("Enter buy price per share: ")
-
-    current_price = get_current_price(symbol)
-
-    if current_price is None:
-        print("Invalid stock symbol or price could not be found.")
-        return
 
     stock = {
         "symbol": symbol,
@@ -64,6 +71,8 @@ def add_stock():
     data = read_json()
     data.append(stock)
     write_json(data)
+
+    current_price = get_current_price(symbol)
 
     print("Stock added successfully!")
     print("Current price for", symbol, "is $", current_price)
@@ -130,13 +139,63 @@ def delete_stock():
         print("Invalid input. Please enter a number.")
 
 
+def search_stock():
+    data = read_json()
+
+    if len(data) == 0:
+        print("No stocks in portfolio.")
+        return
+
+    symbol = input("Enter stock symbol to search in portfolio: ").upper()
+
+    found = False
+
+    for stock in data:
+        if stock["symbol"] == symbol:
+            current_price = get_current_price(stock["symbol"])
+
+            if current_price is None:
+                current_price = stock["buy_price"]
+
+            invested = stock["shares"] * stock["buy_price"]
+            current_value = stock["shares"] * current_price
+            profit_loss = current_value - invested
+
+            print("\nStock Found:")
+            print("Symbol:", stock["symbol"])
+            print("Shares:", stock["shares"])
+            print("Buy Price: $", stock["buy_price"])
+            print("Current Price: $", current_price)
+            print("Invested: $", round(invested, 2))
+            print("Current Value: $", round(current_value, 2))
+            print("Profit/Loss: $", round(profit_loss, 2))
+
+            found = True
+
+    if found == False:
+        print("Stock not found in your portfolio.")
+
+
+def lookup_stock_price():
+    symbol = input("Enter stock symbol to look up: ").upper()
+
+    current_price = get_current_price(symbol)
+
+    if current_price is None:
+        print("Stock symbol not found. Please enter a real ticker symbol.")
+    else:
+        print("Current price for", symbol, "is $", current_price)
+
+
 def main():
     while True:
         print("\nStock Portfolio Tracker")
         print("1. Add stock")
         print("2. View portfolio")
         print("3. Delete stock")
-        print("4. Exit")
+        print("4. Search portfolio")
+        print("5. Lookup stock price")
+        print("6. Exit")
 
         choice = input("Choose an option: ")
 
@@ -147,6 +206,10 @@ def main():
         elif choice == "3":
             delete_stock()
         elif choice == "4":
+            search_stock()
+        elif choice == "5":
+            lookup_stock_price()
+        elif choice == "6":
             print("Goodbye!")
             break
         else:
