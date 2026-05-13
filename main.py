@@ -1,80 +1,9 @@
 import json
 import yfinance as yf
-import customtkinter
+
 FILE_NAME = "portfolio.json"
 
-import customtkinter as ctk
 
-ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("blue")
-
-app = ctk.CTk()
-app.geometry("700x500")
-app.title("Stock Portfolio Tracker")
-
-
-title = ctk.CTkLabel(
-    app,
-    text="Stock Portfolio Tracker",
-    font=("Arial", 30)
-)
-
-title.pack(pady=20)
-
-
-stock_entry = ctk.CTkEntry(
-    app,
-    placeholder_text="Enter Stock Symbol",
-    width=250
-)
-
-stock_entry.pack(pady=10)
-
-
-shares_entry = ctk.CTkEntry(
-    app,
-    placeholder_text="Enter Number of Shares",
-    width=250
-)
-
-shares_entry.pack(pady=10)
-
-
-buy_price_entry = ctk.CTkEntry(
-    app,
-    placeholder_text="Enter Buy Price",
-    width=250
-)
-
-buy_price_entry.pack(pady=10)
-
-
-output_box = ctk.CTkTextbox(
-    app,
-    width=500,
-    height=150
-)
-
-output_box.pack(pady=20)
-
-
-def test_button():
-    stock = stock_entry.get()
-
-    output_box.delete("1.0", "end")
-    output_box.insert("end", "You entered: " + stock)
-
-
-submit_button = ctk.CTkButton(
-    app,
-    text="Submit",
-    command=test_button
-)
-
-submit_button.pack(pady=10)
-
-
-app.mainloop()
 def read_json():
     try:
         with open(FILE_NAME, "r") as file:
