@@ -69,9 +69,19 @@ def add_stock():
     }
 
     data = read_json()
-    data.append(stock)
-    write_json(data)
 
+    stock_exists = False
+
+    for existing_stock in data:
+        if existing_stock["symbol"] == symbol:
+            existing_stock["shares"] += shares
+            stock_exists = True
+            break
+
+    if stock_exists == False:
+        data.append(stock)
+
+    write_json(data)
     current_price = get_current_price(symbol)
 
     print("Stock added successfully!")
