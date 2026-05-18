@@ -65,17 +65,32 @@ def add_stock_gui():
         output_box.insert("end", "Please enter valid numbers.")
         return
 
-    stock = {
-        "symbol": symbol,
-        "shares": shares,
-        "buy_price": buy_price
-    }
-
     data = read_json()
-    data.append(stock)
+
+    stock_exists = False
+
+    for stock in data:
+        if stock["symbol"] == symbol:
+            stock["shares"] += shares
+            stock_exists = True
+            break
+
+    if stock_exists == False:
+        new_stock = {
+            "symbol": symbol,
+            "shares": shares,
+            "buy_price": buy_price
+        }
+
+        data.append(new_stock)
+
     write_json(data)
 
-    output_box.insert("end", "Stock added successfully!\n")
+    if stock_exists:
+        output_box.insert("end", "Existing stock updated successfully!\n")
+    else:
+        output_box.insert("end", "Stock added successfully!\n")
+
     output_box.insert("end", "Current price for " + symbol + " is $" + str(current_price))
 
 
@@ -163,38 +178,102 @@ def delete_stock_gui():
     output_box.insert("end", "Stock not found in your portfolio.")
 
 
+def portfolio_summary_gui():
+    clear_output()
+
+    data = read_json()
+
+    if len(data) == 0:
+        output_box.insert("end", "No stocks added yet.")
+        return
+
+    total_invested = 0
+    total_current_value = 0
+    total_shares = 0
+
+    best_stock = ""
+    worst_stock = ""
+    best_profit = None
+    worst_profit = None
+
+    for stock in data:
+        current_price = get_current_price(stock["symbol"])
+
+        if current_price is None:
+            current_price = stock["buy_price"]
+
+        invested = stock["shares"] * stock["buy_price"]
+        current_value = stock["shares"] * current_price
+        profit_loss = current_value - invested
+
+        total_invested += invested
+        total_current_value += current_value
+        total_shares += stock["shares"]
+
+        if best_profit is None or profit_loss > best_profit:
+            best_profit = profit_loss
+            best_stock = stock["symbol"]
+
+        if worst_profit is None or profit_loss < worst_profit:
+            worst_profit = profit_loss
+            worst_stock = stock["symbol"]
+
+    overall_profit = total_current_value - total_invested
+
+    output_box.insert("end", "Portfolio Summary\n\n")
+    output_box.insert("end", "Number of Stocks: " + str(len(data)) + "\n")
+    output_box.insert("end", "Total Shares: " + str(round(total_shares, 2)) + "\n")
+    output_box.insert("end", "Total Invested: $" + str(round(total_invested, 2)) + "\n")
+    output_box.insert("end", "Current Portfolio Value: $" + str(round(total_current_value, 2)) + "\n")
+    output_box.insert("end", "Overall Profit/Loss: $" + str(round(overall_profit, 2)) + "\n")
+    output_box.insert("end", "Best Stock: " + best_stock + " ($" + str(round(best_profit, 2)) + ")\n")
+    output_box.insert("end", "Worst Stock: " + worst_stock + " ($" + str(round(worst_profit, 2)) + ")")
+
+
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 app = ctk.CTk()
-app.geometry("750x650")
+app.geometry("900x600")
 app.title("Stock Portfolio Tracker")
 
 title = ctk.CTkLabel(app, text="Stock Portfolio Tracker", font=("Arial", 30))
-title.pack(pady=20)
+title.pack(pady=15)
 
-stock_entry = ctk.CTkEntry(app, placeholder_text="Enter Stock Symbol", width=280)
-stock_entry.pack(pady=8)
+main_frame = ctk.CTkFrame(app)
+main_frame.pack(padx=20, pady=10, fill="both", expand=True)
 
-shares_entry = ctk.CTkEntry(app, placeholder_text="Enter Number of Shares", width=280)
-shares_entry.pack(pady=8)
+control_frame = ctk.CTkFrame(main_frame, width=280)
+control_frame.pack(side="left", padx=15, pady=15, fill="y")
 
-buy_price_entry = ctk.CTkEntry(app, placeholder_text="Enter Buy Price", width=280)
-buy_price_entry.pack(pady=8)
+display_frame = ctk.CTkFrame(main_frame)
+display_frame.pack(side="right", padx=15, pady=15, fill="both", expand=True)
 
-add_button = ctk.CTkButton(app, text="Add Stock", command=add_stock_gui)
-add_button.pack(pady=6)
+stock_entry = ctk.CTkEntry(control_frame, placeholder_text="Enter Stock Symbol", width=230)
+stock_entry.pack(pady=10)
 
-view_button = ctk.CTkButton(app, text="View Portfolio", command=view_portfolio_gui)
-view_button.pack(pady=6)
+shares_entry = ctk.CTkEntry(control_frame, placeholder_text="Enter Number of Shares", width=230)
+shares_entry.pack(pady=10)
 
-lookup_button = ctk.CTkButton(app, text="Lookup Stock Price", command=lookup_stock_gui)
-lookup_button.pack(pady=6)
+buy_price_entry = ctk.CTkEntry(control_frame, placeholder_text="Enter Buy Price", width=230)
+buy_price_entry.pack(pady=10)
 
-delete_button = ctk.CTkButton(app, text="Delete Stock", command=delete_stock_gui)
-delete_button.pack(pady=6)
+add_button = ctk.CTkButton(control_frame, text="Add Stock", command=add_stock_gui, width=230)
+add_button.pack(pady=7)
 
-output_box = ctk.CTkTextbox(app, width=620, height=230)
-output_box.pack(pady=20)
+view_button = ctk.CTkButton(control_frame, text="View Portfolio", command=view_portfolio_gui, width=230)
+view_button.pack(pady=7)
+
+lookup_button = ctk.CTkButton(control_frame, text="Lookup Stock Price", command=lookup_stock_gui, width=230)
+lookup_button.pack(pady=7)
+
+delete_button = ctk.CTkButton(control_frame, text="Delete Stock", command=delete_stock_gui, width=230)
+delete_button.pack(pady=7)
+
+summary_button = ctk.CTkButton(control_frame, text="Portfolio Summary", command=portfolio_summary_gui, width=230)
+summary_button.pack(pady=7)
+
+output_box = ctk.CTkTextbox(display_frame, width=520, height=470)
+output_box.pack(padx=15, pady=15, fill="both", expand=True)
 
 app.mainloop()
